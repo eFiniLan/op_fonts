@@ -1,0 +1,130 @@
+[font]
+name = "OpFont"
+mode = "replace_gonoto"
+weights = ["Regular", "Medium", "SemiBold", "Bold"]
+
+[font.weight_values]
+Regular = 400
+Medium = 500
+SemiBold = 600
+Bold = 700
+
+[cache]
+dir = "./cache"
+
+[sources.cdn]
+base_url = "https://raw.githubusercontent.com/notofonts/notofonts.github.io/main/fonts"
+variant = "hinted/ttf"
+
+[sources.cjk]
+base_url = "https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/Variable/OTF"
+
+# =============================================================================
+# Layer 1: CJK base
+# Single font covering unified CJK ideographs (SC∪TC∪JP) + Hangul + Kana +
+# CJK punctuation. Uses NotoSansSC as the glyph source.
+# Generate charset with: python -m op_fonts --generate-charsets
+# =============================================================================
+
+[[scripts]]
+name = "cjk"
+enabled = true
+noto_font = "NotoSansSC-VF.otf"
+noto_path = "Subset"
+charset_file = "charsets/cjk_unified.txt"   # ~10,270 unified ideographs
+unicode_ranges = [
+    "U+3000-303F",   # CJK Symbols and Punctuation
+    "U+3040-309F",   # Hiragana
+    "U+30A0-30FF",   # Katakana
+    "U+31F0-31FF",   # Katakana Phonetic Extensions
+    "U+3200-32FF",   # Enclosed CJK Letters and Months
+    "U+FE30-FE4F",   # CJK Compatibility Forms
+    "U+FF00-FFEF",   # Halfwidth and Fullwidth Forms
+]
+
+# Hangul from Korean font (NotoSansSC doesn't include Hangul)
+[[scripts]]
+name = "hangul"
+enabled = true
+noto_font = "NotoSansKR-VF.otf"
+noto_path = "Subset"
+unicode_ranges = [
+    "U+AC00-D7AF",   # Hangul Syllables
+    "U+1100-11FF",   # Hangul Jamo
+    "U+3130-318F",   # Hangul Compatibility Jamo
+    "U+A960-A97F",   # Hangul Jamo Extended-A
+    "U+D7B0-D7FF",   # Hangul Jamo Extended-B
+]
+
+# =============================================================================
+# Layer 2: Additional scripts not covered by CJK base
+# =============================================================================
+
+[[scripts]]
+name = "thai"
+enabled = true
+noto_font = "NotoSansThai[wdth,wght].ttf"
+noto_path = "NotoSansThai"
+variant = "full/variable-ttf"
+unicode_ranges = [
+    "U+0E00-0E7F",   # Thai
+]
+
+[[scripts]]
+name = "cyrillic"
+enabled = true
+noto_font = "NotoSans[wdth,wght].ttf"
+noto_path = "NotoSans"
+variant = "full/variable-ttf"
+unicode_ranges = [
+    "U+0400-04FF",   # Cyrillic
+    "U+0500-052F",   # Cyrillic Supplement
+]
+
+# =============================================================================
+# Layer 3: Latin, Symbols, Emoji
+# =============================================================================
+
+[[scripts]]
+name = "latin"
+enabled = true
+noto_font = "NotoSans[wdth,wght].ttf"
+noto_path = "NotoSans"
+variant = "full/variable-ttf"
+unicode_ranges = [
+    "U+0000-007F",   # Basic Latin
+    "U+0080-00FF",   # Latin-1 Supplement
+    "U+0100-024F",   # Latin Extended-A/B
+    "U+0250-02AF",   # IPA Extensions
+    "U+1E00-1EFF",   # Latin Extended Additional (Vietnamese)
+    "U+2000-206F",   # General Punctuation
+    "U+2070-209F",   # Superscripts and Subscripts
+    "U+20A0-20CF",   # Currency Symbols
+    "U+2100-214F",   # Letterlike Symbols
+    "U+2150-218F",   # Number Forms
+    "U+FB00-FB06",   # Alphabetic Presentation Forms (ligatures)
+]
+
+# Symbols only come in Regular weight — no variable font available
+[symbols]
+enabled = true
+fonts = [
+    { name = "NotoSansSymbols-Regular.ttf", path = "NotoSansSymbols" },
+    { name = "NotoSansSymbols2-Regular.ttf", path = "NotoSansSymbols2" },
+]
+unicode_ranges = [
+    "U+2190-21FF",   # Arrows
+    "U+2200-22FF",   # Mathematical Operators
+    "U+2300-23FF",   # Miscellaneous Technical
+    "U+25A0-25FF",   # Geometric Shapes
+    "U+2600-26FF",   # Miscellaneous Symbols
+    "U+2700-27BF",   # Dingbats (includes ✓ U+2713)
+    "U+2B00-2BFF",   # Miscellaneous Symbols and Arrows
+    "U+FFF0-FFFD",   # Specials (replacement char)
+]
+
+[emoji]
+enabled = false
+
+[merge]
+drop_tables = ["MATH", "vhea", "vmtx"]

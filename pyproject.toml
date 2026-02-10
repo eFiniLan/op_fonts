@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "op_fonts"
+version = "0.1.0"
+description = "Minimal font builder for openpilot"
+requires-python = ">=3.11"
+dependencies = [
+    "fonttools>=4.47",
+]
+
+[tool.setuptools.packages.find]
+include = ["op_fonts*"]
+
+[project.scripts]
+op-fonts = "op_fonts.cli:main"

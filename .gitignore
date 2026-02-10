@@ -1,0 +1,7 @@
+cache/
+*.ttf
+*.otf
+__pycache__/
+*.egg-info/
+dist/
+build/
