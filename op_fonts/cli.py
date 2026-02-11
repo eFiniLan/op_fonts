@@ -136,6 +136,7 @@ def main(argv: list[str] | None = None) -> None:
         dry_run(config, languages_json=args.languages_json)
         return
 
+    # languages_json arg overrides; otherwise build_all auto-fetches from config URL
     if config.weights:
         outputs = build_all(config, languages_json=args.languages_json)
         for output in outputs:

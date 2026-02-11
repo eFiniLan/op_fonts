@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Minimal font builder for openpilot"
 requires-python = ">=3.11"
 dependencies = [
+    "cffsubr>=0.4.0",
     "fonttools>=4.47",
 ]
 

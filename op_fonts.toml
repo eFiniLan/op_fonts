@@ -1,7 +1,9 @@
 [font]
 name = "OpFont"
 mode = "replace_gonoto"
+output_dir = "dist"
 weights = ["Regular", "Medium", "SemiBold", "Bold"]
+languages_url = "https://raw.githubusercontent.com/commaai/openpilot/master/selfdrive/ui/translations/languages.json"
 
 [font.weight_values]
 Regular = 400
@@ -12,26 +14,29 @@ Bold = 700
 [cache]
 dir = "./cache"
 
+# IBM Plex Sans — https://github.com/IBM/plex (OFL 1.1)
+# Latin variable font includes Latin + Cyrillic. CJK/Thai are static per-weight.
 [sources.cdn]
-base_url = "https://raw.githubusercontent.com/notofonts/notofonts.github.io/main/fonts"
-variant = "hinted/ttf"
+base_url = "https://raw.githubusercontent.com/IBM/plex/master/packages"
+variant = "fonts/complete/otf"
 
 [sources.cjk]
-base_url = "https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/Variable/OTF"
+base_url = "https://raw.githubusercontent.com/IBM/plex/master/packages"
 
 # =============================================================================
-# Layer 1: CJK base
-# Single font covering unified CJK ideographs (SC∪TC∪JP) + Hangul + Kana +
-# CJK punctuation. Uses NotoSansSC as the glyph source.
-# Generate charset with: python -m op_fonts --generate-charsets
+# Layer 1: CJK ideographs from official government standard character lists
+# SC first, TC fills traditional-only gaps, JA fills remaining via pipeline dedup
+# Union: ~6,318 unique CJK ideographs + punctuation/kana/fullwidth ranges
 # =============================================================================
 
+# Simplified Chinese: 通用规范汉字表 一级字表 (3,500 chars)
+# PRC State Council, 2013 (国发〔2013〕23号)
 [[scripts]]
-name = "cjk"
+name = "cjk-sc"
 enabled = true
-noto_font = "NotoSansSC-VF.otf"
-noto_path = "Subset"
-charset_file = "charsets/cjk_unified.txt"   # ~10,270 unified ideographs
+noto_font = "IBMPlexSansSC-Regular.otf"
+noto_path = "plex-sans-sc/fonts/complete/otf/hinted"
+charset_file = "charsets/sc_tongyong_l1.txt"
 unicode_ranges = [
     "U+3000-303F",   # CJK Symbols and Punctuation
     "U+3040-309F",   # Hiragana
@@ -42,18 +47,43 @@ unicode_ranges = [
     "U+FF00-FFEF",   # Halfwidth and Fullwidth Forms
 ]
 
-# Hangul from Korean font (NotoSansSC doesn't include Hangul)
+# Traditional Chinese: 常用國字標準字體表 (4,808 chars)
+# Taiwan Ministry of Education, 1982 (revised 2004)
+[[scripts]]
+name = "cjk-tc"
+enabled = true
+noto_font = "IBMPlexSansTC-Regular.otf"
+noto_path = "plex-sans-tc/fonts/complete/otf/hinted"
+charset_file = "charsets/tc_edu_standard_1.txt"
+unicode_ranges = [
+    "U+3000-303F",   # CJK Symbols and Punctuation
+]
+
+# Japanese: 常用漢字 Jōyō Kanji (2,136 chars)
+# Japanese Cabinet, 2010 (内閣告示第2号)
+[[scripts]]
+name = "cjk-ja"
+enabled = true
+noto_font = "IBMPlexSansJP-Regular.otf"
+noto_path = "plex-sans-jp/fonts/complete/otf/hinted"
+charset_file = "charsets/ja_joyo_kanji.txt"
+unicode_ranges = [
+    "U+3000-303F",   # CJK Symbols and Punctuation
+    "U+3040-309F",   # Hiragana
+    "U+30A0-30FF",   # Katakana
+]
+
+# Korean Hangul: KS X 1001 (2,350 syllables from full block of 11,172)
+# Korean Agency for Technology and Standards, 1987
 [[scripts]]
 name = "hangul"
 enabled = true
-noto_font = "NotoSansKR-VF.otf"
-noto_path = "Subset"
+noto_font = "IBMPlexSansKR-Regular.otf"
+noto_path = "plex-sans-kr/fonts/complete/otf"
+charset_file = "charsets/ko_ksx1001_hangul.txt"
 unicode_ranges = [
-    "U+AC00-D7AF",   # Hangul Syllables
     "U+1100-11FF",   # Hangul Jamo
     "U+3130-318F",   # Hangul Compatibility Jamo
-    "U+A960-A97F",   # Hangul Jamo Extended-A
-    "U+D7B0-D7FF",   # Hangul Jamo Extended-B
 ]
 
 # =============================================================================
@@ -63,34 +93,32 @@ unicode_ranges = [
 [[scripts]]
 name = "thai"
 enabled = true
-noto_font = "NotoSansThai[wdth,wght].ttf"
-noto_path = "NotoSansThai"
-variant = "full/variable-ttf"
+noto_font = "IBMPlexSansThai-Regular.otf"
+noto_path = "plex-sans-thai"
 unicode_ranges = [
     "U+0E00-0E7F",   # Thai
 ]
 
+# Cyrillic from static OTF (same as Latin, CFF outlines)
 [[scripts]]
 name = "cyrillic"
 enabled = true
-noto_font = "NotoSans[wdth,wght].ttf"
-noto_path = "NotoSans"
-variant = "full/variable-ttf"
+noto_font = "IBMPlexSans-Regular.otf"
+noto_path = "plex-sans"
 unicode_ranges = [
     "U+0400-04FF",   # Cyrillic
     "U+0500-052F",   # Cyrillic Supplement
 ]
 
 # =============================================================================
-# Layer 3: Latin, Symbols, Emoji
+# Layer 3: Latin, Symbols
 # =============================================================================
 
 [[scripts]]
 name = "latin"
 enabled = true
-noto_font = "NotoSans[wdth,wght].ttf"
-noto_path = "NotoSans"
-variant = "full/variable-ttf"
+noto_font = "IBMPlexSans-Regular.otf"
+noto_path = "plex-sans"
 unicode_ranges = [
     "U+0000-007F",   # Basic Latin
     "U+0080-00FF",   # Latin-1 Supplement
@@ -105,12 +133,12 @@ unicode_ranges = [
     "U+FB00-FB06",   # Alphabetic Presentation Forms (ligatures)
 ]
 
-# Symbols only come in Regular weight — no variable font available
+# Symbols from Noto (IBM Plex doesn't include symbol fonts)
 [symbols]
 enabled = true
 fonts = [
-    { name = "NotoSansSymbols-Regular.ttf", path = "NotoSansSymbols" },
-    { name = "NotoSansSymbols2-Regular.ttf", path = "NotoSansSymbols2" },
+    { name = "NotoSansSymbols-Regular.ttf", url = "https://raw.githubusercontent.com/notofonts/notofonts.github.io/main/fonts/NotoSansSymbols/hinted/ttf/NotoSansSymbols-Regular.ttf" },
+    { name = "NotoSansSymbols2-Regular.ttf", url = "https://raw.githubusercontent.com/notofonts/notofonts.github.io/main/fonts/NotoSansSymbols2/hinted/ttf/NotoSansSymbols2-Regular.ttf" },
 ]
 unicode_ranges = [
     "U+2190-21FF",   # Arrows
@@ -128,3 +156,21 @@ enabled = false
 
 [merge]
 drop_tables = ["MATH", "vhea", "vmtx"]
+# Only keep essential layout features; drops stylistic alternates (ss01-ss06, salt),
+# CJK variant forms (trad, jp78, jp83, jp90, hojo, nlck, expt), vertical writing
+# (vert, vrt2), width alternates (fwid, hwid, pwid, pkna, nalt), and other features
+# not needed for a car UI. This removes ~2000 unreferenced alternate glyphs.
+keep_features = [
+    "ccmp",  # glyph composition/decomposition
+    "calt",  # contextual alternates
+    "liga",  # standard ligatures (fi, fl)
+    "locl",  # localized forms
+    "frac",  # fractions
+    "numr",  # numerators
+    "dnom",  # denominators
+    "lnum",  # lining figures
+    "onum",  # oldstyle figures
+    "subs",  # subscripts
+    "sups",  # superscripts
+    "zero",  # slashed zero
+]

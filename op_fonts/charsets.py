@@ -22,14 +22,26 @@ LOCALE_FIELDS = {
 
 
 def load_charset_file(path: Path) -> list[int]:
-    """Read a charset file (one hex codepoint per line) → sorted codepoint list."""
+    """Read a charset file → sorted codepoint list.
+
+    Supports two formats:
+    - UTF-8 text: one character per line
+    - Hex: one hex codepoint per line (e.g. 4E00)
+    """
     codepoints: set[int] = set()
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         for line in f:
-            line = line.strip()
+            line = line.rstrip("\n")
             if not line or line.startswith("#"):
                 continue
-            codepoints.add(int(line, 16))
+            if len(line) == 1:
+                codepoints.add(ord(line))
+            else:
+                try:
+                    codepoints.add(int(line, 16))
+                except ValueError:
+                    # Multi-char line that isn't hex — take first char
+                    codepoints.add(ord(line[0]))
     log.debug("Loaded %d codepoints from %s", len(codepoints), path)
     return sorted(codepoints)
 

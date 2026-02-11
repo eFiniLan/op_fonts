@@ -43,6 +43,7 @@ class ScriptEntry:
 class SymbolEntry:
     name: str
     path: str
+    url: str = ""  # explicit download URL (overrides CDN pattern)
 
 
 @dataclass
@@ -64,6 +65,7 @@ class EmojiConfig:
 @dataclass
 class MergeConfig:
     drop_tables: list[str]
+    keep_features: list[str] = field(default_factory=list)  # GSUB/GPOS features to keep (empty = keep all)
 
 
 @dataclass
@@ -73,6 +75,7 @@ class BuildConfig:
     output: str
     mode: str  # "replace_gonoto" or "unified"
     cache_dir: Path
+    output_dir: str
     sources: Sources
     scripts: list[ScriptEntry]
     symbols: SymbolsConfig
@@ -80,11 +83,12 @@ class BuildConfig:
     merge: MergeConfig
     weights: list[str] = field(default_factory=list)
     weight_values: dict[str, int] = field(default_factory=dict)
+    languages_url: str = ""
 
 
 def _parse_script(raw: dict) -> ScriptEntry:
     name = raw["name"]
-    is_cjk = name in ("cjk", "hangul") or name.startswith("cjk_")
+    is_cjk = name in ("cjk", "hangul") or name.startswith(("cjk_", "cjk-"))
     return ScriptEntry(
         name=name,
         enabled=raw.get("enabled", True),
@@ -116,17 +120,20 @@ def load_config(path: Path, overrides: dict | None = None) -> BuildConfig:
 
     symbols_fonts = []
     for sf in symbols_raw.get("fonts", []):
-        symbols_fonts.append(SymbolEntry(name=sf["name"], path=sf["path"]))
+        symbols_fonts.append(SymbolEntry(name=sf["name"], path=sf.get("path", ""), url=sf.get("url", "")))
 
     weights = font.get("weights", [])
     weight_values = font.get("weight_values", {})
 
+    output_dir = font.get("output_dir", "dist")
+
     config = BuildConfig(
         name=font.get("name", "OpFont"),
         style=font.get("style", weights[0] if weights else "Regular"),
-        output=overrides.get("output", font.get("output", f"{font.get('name', 'OpFont')}-{weights[0] if weights else 'Regular'}.ttf")),
+        output=overrides.get("output", font.get("output", f"{font.get('name', 'OpFont')}-{weights[0] if weights else 'Regular'}.otf")),
         mode=mode,
         cache_dir=Path(overrides.get("cache_dir", cache.get("dir", "./cache"))),
+        output_dir=output_dir,
         sources=Sources(
             cdn=SourceCDN(
                 base_url=sources_raw["cdn"]["base_url"],
@@ -151,9 +158,11 @@ def load_config(path: Path, overrides: dict | None = None) -> BuildConfig:
         ),
         merge=MergeConfig(
             drop_tables=merge_raw.get("drop_tables", []),
+            keep_features=merge_raw.get("keep_features", []),
         ),
         weights=weights,
         weight_values=weight_values,
+        languages_url=font.get("languages_url", ""),
     )
 
     log.debug("Loaded config: mode=%s, %d scripts", config.mode, len(config.scripts))
@@ -161,9 +170,15 @@ def load_config(path: Path, overrides: dict | None = None) -> BuildConfig:
 
 
 def enable_scripts_for(config: BuildConfig, script_names: set[str]) -> None:
-    """Enable only the scripts whose names are in script_names (plus symbols)."""
+    """Enable only the scripts whose names are in script_names (plus symbols).
+
+    Uses prefix matching: script "cjk-sc" matches needed script "cjk".
+    """
     for script in config.scripts:
-        script.enabled = script.name in script_names
+        script.enabled = any(
+            script.name == needed or script.name.startswith(needed + "-")
+            for needed in script_names
+        )
     log.info(
         "Enabled scripts: %s",
         [s.name for s in config.scripts if s.enabled],

@@ -65,14 +65,14 @@ def ensure_font(config: BuildConfig, script: ScriptEntry) -> Path:
     return cached
 
 
-def ensure_symbol_font(config: BuildConfig, font_name: str, font_path: str) -> Path:
+def ensure_symbol_font(config: BuildConfig, font_name: str, font_path: str, url: str = "") -> Path:
     """Return local path to a symbol font, downloading if needed."""
     cached = _cache_path(config.cache_dir, font_name)
     if cached.exists():
         log.debug("Cache hit: %s", cached)
         return cached
-    url = _symbol_url(config, font_name, font_path)
-    _download(url, cached)
+    download_url = url or _symbol_url(config, font_name, font_path)
+    _download(download_url, cached)
     return cached
 
 
@@ -104,7 +104,7 @@ def get_download_plan(config: BuildConfig) -> list[tuple[str, str, Path]]:
     if config.symbols.enabled:
         for sf in config.symbols.fonts:
             cached = _cache_path(config.cache_dir, sf.name)
-            url = _symbol_url(config, sf.name, sf.path)
+            url = sf.url or _symbol_url(config, sf.name, sf.path)
             plan.append((sf.name, url, cached))
     if config.emoji.enabled and config.emoji.font:
         cached = _cache_path(config.cache_dir, config.emoji.font)
