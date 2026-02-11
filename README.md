@@ -12,7 +12,7 @@ This tool solves three problems:
 
 1. **Size**: Full IBM Plex Sans CJK fonts contain 30,000+ glyphs each. openpilot's UI only needs the characters that actually appear in translations. We subset to official government standard character lists (3,500 SC + 4,808 TC + 2,136 JA + 2,350 KO Hangul), which cover all characters used in openpilot's `.po` translation files with room to spare. CJK scripts are deduplicated across languages — SC goes first, TC only adds traditional-only characters, JA only adds remaining kanji — so shared ideographs aren't stored twice.
 
-2. **Unused features**: CJK fonts ship with thousands of alternate glyphs for stylistic sets, vertical writing, width variants, and legacy encoding forms (jp78, jp83, jp90, etc.). None of these are needed for openpilot's UI. The build pipeline prunes all GSUB/GPOS features except the essentials (ligatures, contextual alternates, localized forms), removing ~2,000 unreferenced glyphs per weight.
+2. **Unused features**: CJK fonts ship with thousands of alternate glyphs for stylistic sets, vertical writing, width variants, and legacy encoding forms (jp78, jp83, jp90, etc.). None of these are needed for openpilot's UI, which rasterizes fonts into BMFont atlases at build time. The pipeline drops all OpenType layout tables (GSUB/GPOS/GDEF) and their associated alternate glyphs entirely.
 
 3. **Metric consistency**: openpilot's primary font is Inter. IBM Plex Sans has a slightly smaller cap-height ratio (0.698 vs Inter's 0.727), so text rendered in OpFont would appear ~4% shorter than Inter at the same font size. The pipeline scales all glyphs by 1.042x and sets ascender/descender to match Inter's proportions, so switching between Latin and CJK text doesn't cause visible size jumps.
 
@@ -50,8 +50,7 @@ op-fonts
 # dry run — show build plan without downloading or building
 op-fonts --dry-run
 
-# verbose output
-op-fonts -v     # INFO
+# extra verbose output
 op-fonts -vv    # DEBUG
 ```
 
@@ -62,7 +61,7 @@ op-fonts [options]
 
 Options:
   -c, --config PATH           Path to config TOML (auto-detects if omitted)
-  -v, --verbose               Increase verbosity (repeatable)
+  -v, --verbose               Increase verbosity (default: INFO, -vv for DEBUG)
   --dry-run                   Show build plan, don't execute
   --list-scripts              List configured scripts and exit
 ```
@@ -73,7 +72,7 @@ Options:
 1. Download    Fetch source fonts from URLs in config (cached in ./cache/)
 2. Subset      Extract only needed codepoints per script, deduplicate across scripts
 3. Merge       Convert outlines to common format, normalize UPM, merge into single font
-4. Prune       Remove unused GSUB/GPOS features and ~2,000 unreferenced alternate glyphs
+4. Drop tables  Remove OpenType layout tables (GSUB/GPOS/GDEF) not needed for BMFont rasterization
 5. Finalize    Scale glyphs to match target metrics, set metadata, CFF subroutinize
 ```
 
@@ -111,8 +110,8 @@ url = "https://raw.githubusercontent.com/notofonts/notofonts.github.io/main/font
 unicode_ranges = ["U+2190-21FF", ...]
 
 [merge]
-drop_tables = ["MATH", "vhea", "vmtx"]
-keep_features = ["ccmp", "calt", "liga", "locl", ...]
+drop_tables = ["MATH", "meta", "vhea", "vmtx", "GSUB", "GPOS", "GDEF"]
+keep_features = []  # BMFont rasterization doesn't need OpenType layout features
 ```
 
 Each script specifies its own `url`, so you can mix fonts from different sources (e.g. IBM Plex for Latin, Noto Sans for CJK).

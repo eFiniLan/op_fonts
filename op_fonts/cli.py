@@ -57,7 +57,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "--verbose", "-v",
         action="count",
-        default=0,
+        default=1,
         help="Increase verbosity (-v for INFO, -vv for DEBUG)",
     )
 
